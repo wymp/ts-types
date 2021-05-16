@@ -1,3 +1,5 @@
+import { Api as ApiTypes } from "./Api";
+
 export namespace Auth {
   /**
    * This structure represents the expected authn/z info attached to any request made against the
@@ -39,19 +41,19 @@ export namespace Auth {
     r: number;
     ip: string;
     d?: boolean;
-    u?: {
+    u?: null | {
       id: string;
       r: number;
       s?: number | null;
     };
   };
   export type ReqInfo = ReqInfoString | ReqInfoBitwise;
+  export type AuthdReq<T> = T & { auth: ReqInfo };
 
   export type ApiAttributes = {
     domain: string;
     version: string;
     url: string;
-    allowUnidentifiedReqs: boolean;
   };
 
   export type OrganizationAttributes = {
@@ -59,10 +61,10 @@ export namespace Auth {
     createdMs: number;
   };
 
-  export type ClientAttributes = {
-    secretBcrypt: string;
+  export type ClientAttributes<Roles extends string> = {
     name: string;
     reqsPerSec: number;
+    roles: Array<Roles>;
     createdMs: number;
   };
 
@@ -76,9 +78,9 @@ export namespace Auth {
     createdMs: number;
   };
 
-  export type UserAttributes = {
+  export type UserAttributes<Roles extends string> = {
     name: string;
-    passwordBcrypt: string | null;
+    roles: Array<Roles>;
     // banned, deleted, 2fa (boolean)
     createdMs: number;
   };
@@ -95,13 +97,9 @@ export namespace Auth {
     email: string;
     userGeneratedToken: string | null;
     createdMs: number;
-    expiresMs: number;
+    expiredMs: number;
     consumedMs: number | null;
     invalidatedMs: number | null;
-  };
-
-  export type UserRoleAttributes<Roles extends string> = {
-    roleId: Roles;
   };
 
   export type SessionAttributes = {
@@ -109,7 +107,7 @@ export namespace Auth {
     ip: string;
     invalidatedMs: number | null;
     createdMs: number;
-    expiresMs: number;
+    expiredMs: number;
   };
 
   /**
@@ -127,23 +125,16 @@ export namespace Auth {
       id: string; // This will be `[domain]:[version]`
       type: "apis";
       active: boolean;
-    }
+    };
 
     /**
-     * Clients and access restrictions
-     *
-    export type Client = Omit<ClientAttributes, "secretBcrypt"> & {
+     * Organizations, Clients and access restrictions
+     */
+    export type Organization = { id: string } & OrganizationAttributes;
+    export type Client<Roles extends string> = ClientAttributes<Roles> & {
       id: string;
       type: "clients";
       organization: { data: { type: "organizations"; id: string } };
-      roles: { data: null | Array<{ type: "client-roles"; id: string }> };
-    };
-    export type ClientRole<Roles extends string> = {
-      id: Roles;
-      type: "client-roles";
-      client: {
-        data: { type: "clients"; id: string };
-      };
     };
     export type ClientAccessRestriction = ClientAccessRestrictionAttributes & {
       id: string;
@@ -157,13 +148,12 @@ export namespace Auth {
      * Users and related
      */
 
-    export type User = Omit<UserAttributes, "passwordBcrypt"> & {
+    export type User<Roles extends string> = UserAttributes<Roles> & {
       id: string;
       type: "users";
       banned: boolean;
       deleted: boolean;
       "2fa": boolean;
-      roles: { data: null | Array<{ type: "user-roles"; id: string }> };
     };
 
     export type PostUser = {
@@ -171,13 +161,6 @@ export namespace Auth {
       email: string;
       password?: string;
       passwordConf?: string;
-    };
-
-    export type UserRole<Roles extends string> = UserRoleAttributes<Roles> & {
-      type: "user-roles";
-      user: {
-        data: { type: "users"; id: string };
-      };
     };
 
     /**
@@ -216,13 +199,30 @@ export namespace Auth {
     export type AuthnResponse = AuthnStep | AuthnSession;
 
     /**
-     * 
+     *
      * Collected Resources and API Responses
      *
      */
-    export type Resource = Api | User | PostUser | UserRole<string> | AuthnStep | AuthnSession;
-    export const Responses = {
-    }
+    export type Resource<ClientRoles extends string, UserRoles extends string> =
+      | Api
+      | AuthnStep
+      | AuthnSession
+      | Client<ClientRoles>
+      | ClientAccessRestriction
+      | Organization
+      | PostUser
+      | User<UserRoles>;
+
+    export type Responses<ClientRoles extends string, UserRoles extends string> = {
+      "GET /organizations": ApiTypes.CollectionResponse<
+        Organization,
+        Resource<ClientRoles, UserRoles>
+      >;
+      "GET /organizations/:id": ApiTypes.SingleResponse<
+        Organization,
+        Resource<ClientRoles, UserRoles>
+      >;
+    };
   }
 
   /**
@@ -234,34 +234,42 @@ export namespace Auth {
    */
   export namespace Db {
     // Apis are identified by their domain and version, so no formal "id" property here
-    export type Api = ApiAttributes & { active: 0 | 1 };
+    export type Api = ApiAttributes & { active: 0 | 1; allowUnidentifiedReqs: 0 | 1 };
     export type Organization = { id: string } & OrganizationAttributes;
-    export type Client = ClientAttributes & {
+    export type Client = Omit<ClientAttributes<string>, "roles"> & {
       id: string;
       organizationId: string;
+      secretBcrypt: string;
     };
-    export type ClientRole = { roleId: string; clientId: string };
+    export type ClientRole<Roles extends string> = {
+      clientId: string;
+      roleId: Roles;
+    };
     export type ClientAccessRestriction = {
       id: string;
       type: ClientAccessRestrictionTypes;
       clientId: string;
     } & ClientAccessRestrictionAttributes;
-    export type User = {
-      id: string
+    export type User = Omit<UserAttributes<string>, "roles"> & {
+      id: string;
+      passwordBcrypt: string | null;
       banned: 0 | 1;
       deleted: 0 | 1;
       "2fa": 0 | 1;
-    } & UserAttributes;
+    };
+    export type UserRole<Roles extends string> = {
+      userId: string;
+      roleId: Roles;
+    };
     export type Email = { userId: string } & EmailAttributes;
     export type VerificationCode = VerificationCodeAttributes;
-    export type UserRole<Roles extends string> = { userId: string } & UserRoleAttributes<Roles>;
     export type Session = { id: string; userId: string } & SessionAttributes;
     export type SessionToken = {
       type: "session" | "refresh";
       tokenSha256: Buffer;
       sessionId: string;
       createdMs: number;
-      expiresMs: number;
+      expiredMs: number;
       invalidatedMs: number | null;
     };
   }
