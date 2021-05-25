@@ -37,6 +37,13 @@ export namespace Api {
     __sort?: undefined | string;
   };
 
+  export type NextPageParams = {
+    size: number;
+    nextCursor: string | null;
+    prevCursor: string | null;
+    sort?: string | null;
+  };
+
   /** A typical collection response */
   export type CollectionResponse<
     Resource extends unknown = unknown,
@@ -46,14 +53,7 @@ export namespace Api {
     t: "collection";
     data: Array<Resource>;
     included?: Array<Included>;
-    meta: Meta & {
-      pg: {
-        size: number;
-        nextCursor: string | null;
-        prevCursor: string | null;
-        sort?: string | null;
-      };
-    };
+    meta: Meta & { pg: NextPageParams };
   };
 
   /** A typical single resource response */

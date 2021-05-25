@@ -1,6 +1,6 @@
 {
   "name": "@wymp/types",
-  "version": "0.1.0-rc3",
+  "version": "0.1.0-rc4",
   "description": "Types relevant to packages in the Wymp ecosystem. Note that this is NOT the same as @wymp/ts-simple-interfaces. See README for explanation.",
   "author": "Kael Shipman<kael.shipman@gmail.com>",
   "homepage": "https://github.com/wymp/ts-types",
@@ -21,9 +21,9 @@
   },
   "devDependencies": {
     "husky": "^6.0.0",
-    "prettier": "^2.2.1",
+    "prettier": "^2.3.0",
     "pretty-quick": "^3.1.0",
-    "typescript": "^3.9.7 || ^4.0.0"
+    "typescript": "^4.2.4"
   },
   "prettier": {
     "printWidth": 100,
