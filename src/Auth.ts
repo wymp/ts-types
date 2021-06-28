@@ -97,7 +97,7 @@ export namespace Auth {
     email: string;
     userGeneratedToken: string | null;
     createdMs: number;
-    expiredMs: number;
+    expiresMs: number;
     consumedMs: number | null;
     invalidatedMs: number | null;
   };
@@ -107,7 +107,7 @@ export namespace Auth {
     ip: string;
     invalidatedMs: number | null;
     createdMs: number;
-    expiredMs: number;
+    expiresMs: number;
   };
 
   /**
@@ -130,7 +130,10 @@ export namespace Auth {
     /**
      * Organizations, Clients and access restrictions
      */
-    export type Organization = { id: string } & OrganizationAttributes;
+    export type Organization = {
+      id: string;
+      type: "organizations";
+    } & OrganizationAttributes;
     export type Client<Roles extends string> = ClientAttributes<Roles> & {
       id: string;
       type: "clients";
@@ -169,34 +172,36 @@ export namespace Auth {
      *
      */
 
-    export enum AuthnTypes {
-      Email = "email",
-      Password = "password",
-      Code = "code",
-      Totp = "totp",
+    export namespace Authn {
+      export enum Types {
+        Email = "email",
+        Password = "password",
+        Code = "code",
+        Totp = "totp",
+      }
+
+      export type Request = {
+        idType: Types.Email | Types.Code;
+        idValue: string;
+        state: string;
+        secret?: string;
+      };
+
+      export type Step = {
+        t: "step";
+        step: Authn.Types;
+        code: string;
+        state: string;
+      };
+
+      export type Session = {
+        t: "session";
+        token: string;
+        refresh: string;
+      };
+
+      export type Response = Step | Session;
     }
-
-    export type AuthnRequest = {
-      idType: AuthnTypes.Email | AuthnTypes.Code;
-      idValue: string;
-      state: string;
-      secret?: string;
-    };
-
-    export type AuthnStep = {
-      t: "step";
-      step: AuthnTypes;
-      code: string;
-      state: string;
-    };
-
-    export type AuthnSession = {
-      t: "session";
-      token: string;
-      refresh: string;
-    };
-
-    export type AuthnResponse = AuthnStep | AuthnSession;
 
     /**
      *
@@ -205,8 +210,8 @@ export namespace Auth {
      */
     export type Resource<ClientRoles extends string, UserRoles extends string> =
       | Api
-      | AuthnStep
-      | AuthnSession
+      | Authn.Step
+      | Authn.Session
       | Client<ClientRoles>
       | ClientAccessRestriction
       | Organization
@@ -222,6 +227,9 @@ export namespace Auth {
         Organization,
         Resource<ClientRoles, UserRoles>
       >;
+      "GET /users": ApiTypes.CollectionResponse<User<UserRoles>, Resource<ClientRoles, UserRoles>>;
+      "GET /users/:id": ApiTypes.SingleResponse<User<UserRoles>, Resource<ClientRoles, UserRoles>>;
+      "POST /users": { data: Authn.Session };
     };
   }
 
@@ -269,8 +277,14 @@ export namespace Auth {
       tokenSha256: Buffer;
       sessionId: string;
       createdMs: number;
-      expiredMs: number;
+      expiresMs: number;
       invalidatedMs: number | null;
+    };
+
+    export type UserClient = {
+      userId: string;
+      clientId: string;
+      createdMs: number;
     };
   }
 }
