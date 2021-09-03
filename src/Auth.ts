@@ -5,13 +5,14 @@ export namespace Auth {
    * This structure represents the expected authn/z info attached to any request made against the
    * system. Keys are as follows:
    *
-   * t = set system (see below)
+   * t = "set" system (see below)
    * c = clientId
-   * a = authorized
+   * a = authenticated (i.e., provided a valid secret key)
    * r = client roles
    * ip = ip address from which the request originated
    * d = "debug mode" - This indicates that a valid debug key was passed and that debugging
    * features should be made available
+   * u.sid = session id
    * u.id = user id
    * u.r = user roles
    * u.s = An optional array of scopes granted via oauth. If null or undefined, then this is a
@@ -29,6 +30,7 @@ export namespace Auth {
     ip: string;
     d?: boolean;
     u?: {
+      sid: string;
       id: string;
       r: Array<string>;
       s?: Array<string> | null;
@@ -42,6 +44,7 @@ export namespace Auth {
     ip: string;
     d?: boolean;
     u?: null | {
+      sid: string;
       id: string;
       r: number;
       s?: number | null;
@@ -81,8 +84,10 @@ export namespace Auth {
   export type UserAttributes<Roles extends string> = {
     name: string;
     roles: Array<Roles>;
-    // banned, deleted, 2fa (boolean)
+    // 2fa (boolean)
     createdMs: number;
+    bannedMs: number;
+    deletedMs: number;
   };
 
   export type EmailAttributes = {
@@ -154,8 +159,6 @@ export namespace Auth {
     export type User<Roles extends string> = UserAttributes<Roles> & {
       id: string;
       type: "users";
-      banned: boolean;
-      deleted: boolean;
       "2fa": boolean;
     };
 
@@ -165,6 +168,8 @@ export namespace Auth {
       password?: string;
       passwordConf?: string;
     };
+
+    export type Session = { id: string } & SessionAttributes;
 
     /**
      *
@@ -180,14 +185,7 @@ export namespace Auth {
         Totp = "totp",
       }
 
-      export type Request = {
-        idType: Types.Email | Types.Code;
-        idValue: string;
-        state: string;
-        secret?: string;
-      };
-
-      export type Step = {
+      export type StepResponse = {
         t: "step";
         step: Authn.Types;
         code: string;
@@ -200,7 +198,7 @@ export namespace Auth {
         refresh: string;
       };
 
-      export type Response = Step | Session;
+      export type Response = StepResponse | Session;
     }
 
     /**
@@ -210,12 +208,13 @@ export namespace Auth {
      */
     export type Resource<ClientRoles extends string, UserRoles extends string> =
       | Api
-      | Authn.Step
+      | Authn.StepResponse
       | Authn.Session
       | Client<ClientRoles>
       | ClientAccessRestriction
       | Organization
       | PostUser
+      | Session
       | User<UserRoles>;
 
     export type Responses<ClientRoles extends string, UserRoles extends string> = {
@@ -227,6 +226,13 @@ export namespace Auth {
         Organization,
         Resource<ClientRoles, UserRoles>
       >;
+      "GET /sessions": ApiTypes.CollectionResponse<Session, Resource<ClientRoles, UserRoles>>;
+      "POST /sessions/login/email": { data: null };
+      "POST /sessions/login/password": { data: Authn.StepResponse | Authn.Session };
+      "POST /sessions/login/code": { data: Authn.StepResponse | Authn.Session };
+      "POST /sessions/login/totp": { data: Authn.StepResponse | Authn.Session };
+      "POST /sessions/refresh": { data: Authn.Session };
+      "POST /sessions/invalidate": { data: null };
       "GET /users": ApiTypes.CollectionResponse<User<UserRoles>, Resource<ClientRoles, UserRoles>>;
       "GET /users/:id": ApiTypes.SingleResponse<User<UserRoles>, Resource<ClientRoles, UserRoles>>;
       "POST /users": { data: Authn.Session };
@@ -261,8 +267,6 @@ export namespace Auth {
     export type User = Omit<UserAttributes<string>, "roles"> & {
       id: string;
       passwordBcrypt: string | null;
-      banned: 0 | 1;
-      deleted: 0 | 1;
       "2fa": 0 | 1;
     };
     export type UserRole<Roles extends string> = {
@@ -278,6 +282,7 @@ export namespace Auth {
       sessionId: string;
       createdMs: number;
       expiresMs: number;
+      consumedMs: number | null;
       invalidatedMs: number | null;
     };
 
