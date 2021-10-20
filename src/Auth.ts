@@ -91,7 +91,6 @@ export namespace Auth {
   };
 
   export type EmailAttributes = {
-    email: string;
     verifiedMs: number | null;
     createdMs: number;
   };
@@ -160,6 +159,14 @@ export namespace Auth {
       id: string;
       type: "users";
       "2fa": boolean;
+      emails: {
+        data: null | Array<{ type: "emails"; id: string }>;
+      };
+    };
+
+    export type UserRole<Roles extends string> = {
+      id: Roles;
+      type: "user-roles";
     };
 
     export type PostUser = {
@@ -169,7 +176,23 @@ export namespace Auth {
       passwordConf?: string;
     };
 
+    export type Email = EmailAttributes & {
+      id: string;
+      type: "emails";
+    };
+
     export type Session = { id: string } & SessionAttributes;
+
+    export type OrgMembership = {
+      id: string;
+      type: "org-memberships";
+      user: { data: { type: "users"; id: string } };
+      organization: { data: { type: "organizations"; id: string } };
+      read: boolean;
+      edit: boolean;
+      manage: boolean;
+      delete: boolean;
+    };
 
     /**
      *
@@ -215,7 +238,8 @@ export namespace Auth {
       | Organization
       | PostUser
       | Session
-      | User<UserRoles>;
+      | User<UserRoles>
+      | OrgMembership;
 
     export type Responses<ClientRoles extends string, UserRoles extends string> = {
       "GET /organizations": ApiTypes.CollectionResponse<
@@ -223,6 +247,10 @@ export namespace Auth {
         Resource<ClientRoles, UserRoles>
       >;
       "GET /organizations/:id": ApiTypes.SingleResponse<
+        Organization,
+        Resource<ClientRoles, UserRoles>
+      >;
+      "POST /organizations": ApiTypes.SingleResponse<
         Organization,
         Resource<ClientRoles, UserRoles>
       >;
@@ -236,6 +264,31 @@ export namespace Auth {
       "GET /users": ApiTypes.CollectionResponse<User<UserRoles>, Resource<ClientRoles, UserRoles>>;
       "GET /users/:id": ApiTypes.SingleResponse<User<UserRoles>, Resource<ClientRoles, UserRoles>>;
       "POST /users": { data: Authn.Session };
+      "PATCH /users/:id": ApiTypes.SingleResponse<
+        User<UserRoles>,
+        Resource<ClientRoles, UserRoles>
+      >;
+      "DELETE /users/:id": { data: null };
+      "GET /users/:id/roles": ApiTypes.CollectionResponse<UserRole<UserRoles>>;
+      "POST /users/:id/roles": ApiTypes.CollectionResponse<UserRole<UserRoles>>;
+      "DELETE /users/:id/roles/:id": { data: null };
+      "GET /users/:id/memberships": ApiTypes.CollectionResponse<
+        OrgMembership,
+        Resource<ClientRoles, UserRoles>
+      >;
+      "GET /organizations/:id/memberships": ApiTypes.CollectionResponse<
+        OrgMembership,
+        Resource<ClientRoles, UserRoles>
+      >;
+      "POST /organizations/:id/memberships": ApiTypes.CollectionResponse<
+        OrgMembership,
+        Resource<ClientRoles, UserRoles>
+      >;
+      "DELETE /org-memberships/:id": { data: null };
+      "PATCH /org-memberships/:id": ApiTypes.SingleResponse<
+        OrgMembership,
+        Resource<ClientRoles, UserRoles>
+      >;
     };
   }
 
@@ -273,7 +326,7 @@ export namespace Auth {
       userId: string;
       roleId: Roles;
     };
-    export type Email = { userId: string } & EmailAttributes;
+    export type Email = { id: string; userId: string } & EmailAttributes;
     export type VerificationCode = VerificationCodeAttributes;
     export type Session = { id: string; userId: string } & SessionAttributes;
     export type SessionToken = {
@@ -290,6 +343,15 @@ export namespace Auth {
       userId: string;
       clientId: string;
       createdMs: number;
+    };
+    export type OrgMembership = {
+      id: string;
+      userId: string;
+      organizationId: string;
+      read: 1 | 0;
+      edit: 1 | 0;
+      manage: 1 | 0;
+      delete: 1 | 0;
     };
   }
 }

@@ -84,6 +84,13 @@ export namespace Api {
     meta?: Meta;
   };
 
+  /** A null response */
+  export type NullResponse<Meta extends unknown = unknown> = {
+    t: "null";
+    data: null;
+    meta?: Meta;
+  };
+
   /** Aggregate response type */
   export type Response<
     Resource extends unknown = unknown,
@@ -94,7 +101,8 @@ export namespace Api {
   > =
     | CollectionResponse<Resource, Included, Meta>
     | SingleResponse<Resource, Included, Meta>
-    | ErrorResponse<ErrorMeta, Obstructions>;
+    | ErrorResponse<ErrorMeta, Obstructions>
+    | NullResponse<Meta>;
 }
 
 type GenericParams = { [k: string]: GenericParams };
