@@ -37,10 +37,23 @@ export namespace Api {
     __sort?: undefined | string;
   };
 
+  /**
+   * A package of information about the current page being returned, including the number of items
+   * selected for (which is not necessarily equal to the number of items return), the way the page
+   * is sorted, a cursor to use to obtain the next page, and a cursor to use to obtain the previous
+   * page.
+   */
   export type NextPageParams = {
+    /** The number of items requested for the current page */
     size: number;
+    /** A cursor that may be used to obtain the next page of results. `null` if there is no next page. */
     nextCursor: string | null;
+    /** A cursor that may be used to obtain the previous page of results. `null` if there is no previous page. */
     prevCursor: string | null;
+    /**
+     * If the current page was sorted in a certain way, that paramter is specified here so it may
+     * be used in subsequent calls to sort in the same way.
+     */
     sort?: string | null;
   };
 
@@ -53,6 +66,7 @@ export namespace Api {
     t: "collection";
     data: Array<Resource>;
     included?: Array<Included>;
+    /** For collections, there is a definite `meta` key and it contains at least the Page parameters. */
     meta: Meta & { pg: NextPageParams };
   };
 
