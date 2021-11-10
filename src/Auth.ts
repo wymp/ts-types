@@ -21,6 +21,10 @@ export namespace Auth {
    * Note that roles and scopes may be strings (e.g., "sysadmin", "employee", etc...) or numbers
    * representing bitwise values. You must specify which system you are using using the `t`
    * parameter, where 0 means Arrays of strings and 1 means bitwise numbers.
+   *
+   * **TODO: OAUTH IS NOT A WELL DEFINED CONCEPT FOR THIS LIBRARY RIGHT NOW. EVENTUALLY IT
+   * WILL LIKELY BE BROKEN OUT INTO ITS OWN SEGMENT OF THE REQINFO OBJECT, BUT WE'RE NOT GOING TO
+   * WORRY ABOUT IT FOR NOW.**
    */
   export type ReqInfoString = {
     t: 0;
@@ -51,6 +55,8 @@ export namespace Auth {
     };
   };
   export type ReqInfo = ReqInfoString | ReqInfoBitwise;
+  export type AuthdReqString<T> = T & { auth: ReqInfoString };
+  export type AuthdReqBitwise<T> = T & { auth: ReqInfoBitwise };
   export type AuthdReq<T> = T & { auth: ReqInfo };
 
   export type ApiAttributes = {
@@ -142,6 +148,10 @@ export namespace Auth {
       id: string;
       type: "clients";
       organization: { data: { type: "organizations"; id: string } };
+    };
+    export type ClientRole<Roles extends string> = {
+      id: Roles;
+      type: "client-roles";
     };
     export type ClientAccessRestriction = ClientAccessRestrictionAttributes & {
       id: string;
@@ -235,13 +245,15 @@ export namespace Auth {
       | Authn.Session
       | Client<ClientRoles>
       | ClientAccessRestriction
+      | Email
       | Organization
+      | OrgMembership
       | PostUser
       | Session
-      | User<UserRoles>
-      | OrgMembership;
+      | User<UserRoles>;
 
     export type Responses<ClientRoles extends string, UserRoles extends string> = {
+      // Organizations
       "GET /organizations": ApiTypes.CollectionResponse<
         Organization,
         Resource<ClientRoles, UserRoles>
@@ -254,6 +266,8 @@ export namespace Auth {
         Organization,
         Resource<ClientRoles, UserRoles>
       >;
+
+      // Sessions
       "GET /sessions": ApiTypes.CollectionResponse<Session, Resource<ClientRoles, UserRoles>>;
       "POST /sessions/login/email": { data: null };
       "POST /sessions/login/password": { data: Authn.StepResponse | Authn.Session };
@@ -261,6 +275,8 @@ export namespace Auth {
       "POST /sessions/login/totp": { data: Authn.StepResponse | Authn.Session };
       "POST /sessions/refresh": { data: Authn.Session };
       "POST /sessions/invalidate": { data: null };
+
+      // Users
       "GET /users": ApiTypes.CollectionResponse<User<UserRoles>, Resource<ClientRoles, UserRoles>>;
       "GET /users/:id": ApiTypes.SingleResponse<User<UserRoles>, Resource<ClientRoles, UserRoles>>;
       "POST /users": { data: Authn.Session };
@@ -269,9 +285,60 @@ export namespace Auth {
         Resource<ClientRoles, UserRoles>
       >;
       "DELETE /users/:id": { data: null };
+
+      // User Roles
       "GET /users/:id/roles": ApiTypes.CollectionResponse<UserRole<UserRoles>>;
       "POST /users/:id/roles": ApiTypes.CollectionResponse<UserRole<UserRoles>>;
       "DELETE /users/:id/roles/:id": { data: null };
+
+      // User Emails
+      "GET /users/:id/emails": ApiTypes.CollectionResponse<Email, Resource<ClientRoles, UserRoles>>;
+      "POST /users/:id/emails": ApiTypes.SingleResponse<Email, Resource<ClientRoles, UserRoles>>;
+      "DELETE /users/:id/emails/:id": { data: null };
+      "POST /users/:id/emails/:id/generate-verification": { data: null };
+      "POST /users/:id/emails/:id/verify": ApiTypes.SingleResponse<
+        Email,
+        Resource<ClientRoles, UserRoles>
+      >;
+
+      // Clients
+      "GET /organizations/:id/clients": ApiTypes.CollectionResponse<
+        Client<ClientRoles>,
+        Resource<ClientRoles, UserRoles>
+      >;
+      "POST /organizations/:id/clients": ApiTypes.SingleResponse<
+        Client<ClientRoles> & { secret: string },
+        Resource<ClientRoles, UserRoles>
+      >;
+      "GET /organizations/:id/clients/:id": ApiTypes.SingleResponse<
+        Client<ClientRoles>,
+        Resource<ClientRoles, UserRoles>
+      >;
+      "PATCH /organizations/:id/clients/:id": ApiTypes.SingleResponse<
+        Client<ClientRoles>,
+        Resource<ClientRoles, UserRoles>
+      >;
+      "DELETE /organizations/:id/clients/:id": { data: null };
+      "POST /organizations/:id/clients/:id/refresh-secret": ApiTypes.SingleResponse<
+        Client<ClientRoles> & { secret: string },
+        Resource<ClientRoles, UserRoles>
+      >;
+
+      // Client Roles
+      "GET /organizations/:id/clients/:id/roles": ApiTypes.CollectionResponse<
+        ClientRole<ClientRoles>
+      >;
+      "POST /organizations/:id/clients/:id/roles": ApiTypes.CollectionResponse<
+        ClientRole<ClientRoles>
+      >;
+      "DELETE /organizations/:id/clients/:id/roles/:id": { data: null };
+
+      // Client Access Restrictions
+      "GET /organizations/:id/clients/:id/access-restrictions": ApiTypes.CollectionResponse<ClientAccessRestriction>;
+      "POST /organizations/:id/clients/:id/access-restrictions": ApiTypes.SingleResponse<ClientAccessRestriction>;
+      "DELETE /organizations/:id/clients/:id/access-restrictions/:id": { data: null };
+
+      // Organization memberships
       "GET /users/:id/memberships": ApiTypes.CollectionResponse<
         OrgMembership,
         Resource<ClientRoles, UserRoles>
@@ -307,6 +374,7 @@ export namespace Auth {
       id: string;
       organizationId: string;
       secretBcrypt: string;
+      deletedMs: null | number;
     };
     export type ClientRole<Roles extends string> = {
       clientId: string;
