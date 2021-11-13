@@ -1,6 +1,6 @@
 {
   "name": "@wymp/types",
-  "version": "0.1.0-rc10",
+  "version": "0.2.0-rc1",
   "description": "Types relevant to packages in the Wymp ecosystem. Note that this is NOT the same as @wymp/ts-simple-interfaces. See README for explanation.",
   "author": "Kael Shipman<kael.shipman@gmail.com>",
   "homepage": "https://github.com/wymp/ts-types",
@@ -13,7 +13,7 @@
     "dist/**/*"
   ],
   "scripts": {
-    "docgen": "npx typedoc src/index.ts --sort visibility --sort static-first --sort alphabetical",
+    "docgen": "npx typedoc src/index.ts --sort source-order",
     "prepublishOnly": "rm -Rf dist; tsc"
   },
   "license": "ISC",
