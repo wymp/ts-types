@@ -209,7 +209,7 @@ export namespace Api {
     /**
      * Defines the set of parameters that may be passed into the API via the query string to specify
      * page details and sorting of the result set. E.g.,
-     * `GET /users?pg[size]=25&pg[cursor]=bnVtOjY%3D&sort=-createdDate%2C%2Bname
+     * `GET /users?pg[size]=25&pg[cursor]=bnVtOjY%3D&sort=-createdDate%2C%2Bname&include=bestFriend.name`
      */
     export type CollectionParams = {
       pg?: {
@@ -217,6 +217,7 @@ export namespace Api {
         cursor?: string;
       };
       sort?: string;
+      include?: string;
     };
   }
 }
