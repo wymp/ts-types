@@ -6,10 +6,7 @@
     "outDir": "./dist/",
     "rootDir": "./src",
     "strict": true,
-    "baseUrl": "./src",
-    "types": [
-        "node"
-    ]
+    "baseUrl": "./src"
   },
-"include": ["./src/**/*.ts"]
+  "include": ["./src/**/*.ts"]
 }

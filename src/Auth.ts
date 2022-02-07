@@ -1,5 +1,9 @@
 import { Api as ApiTypes } from "./Api";
+import { BufferLike } from "./Misc";
 
+/**
+ * The Auth type namespace for the Wymp ecosystem
+ */
 export namespace Auth {
   /**
    * This structure represents the expected authn/z info attached to any request made against the
@@ -102,7 +106,7 @@ export namespace Auth {
   };
 
   export type VerificationCodeAttributes = {
-    codeSha256: Buffer;
+    codeSha256: BufferLike;
     type: "login" | "verification";
     email: string;
     userGeneratedToken: string | null;
@@ -399,7 +403,7 @@ export namespace Auth {
     export type Session = { id: string; userId: string } & SessionAttributes;
     export type SessionToken = {
       type: "session" | "refresh";
-      tokenSha256: Buffer;
+      tokenSha256: BufferLike;
       sessionId: string;
       createdMs: number;
       expiresMs: number;
