@@ -299,11 +299,8 @@ export namespace Auth {
       "GET /users/:id/emails": ApiTypes.CollectionResponse<Email, Resource<ClientRoles, UserRoles>>;
       "POST /users/:id/emails": ApiTypes.SingleResponse<Email, Resource<ClientRoles, UserRoles>>;
       "DELETE /users/:id/emails/:id": { data: null };
-      "POST /users/:id/emails/:id/generate-verification": { data: null };
-      "POST /users/:id/emails/:id/verify": ApiTypes.SingleResponse<
-        Email,
-        Resource<ClientRoles, UserRoles>
-      >;
+      "POST /emails/:id/send-verification": { data: null };
+      "POST /emails/:id/verify": ApiTypes.SingleResponse<Email, Resource<ClientRoles, UserRoles>>;
 
       // Clients
       "GET /organizations/:id/clients": ApiTypes.CollectionResponse<
