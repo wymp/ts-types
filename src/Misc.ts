@@ -10,7 +10,6 @@ export type PartialSelect<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K
 
 export type CharacterEncodings = "utf8" | "hex" | "base64" | "utf16";
 export interface BufferLike {
-  equals(otherBuffer: BufferLike): boolean;
   toString(encoding?: string, start?: number, end?: number): string;
   slice(start?: number, end?: number): BufferLike;
   indexOf(value: string | number | BufferLike, byteOffset?: number, encoding?: string): number;
