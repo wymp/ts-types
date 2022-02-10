@@ -1,5 +1,4 @@
 import { Api as ApiTypes } from "./Api";
-import { BufferLike } from "./Misc";
 
 /**
  * The Auth type namespace for the Wymp ecosystem
@@ -103,17 +102,6 @@ export namespace Auth {
   export type EmailAttributes = {
     verifiedMs: number | null;
     createdMs: number;
-  };
-
-  export type VerificationCodeAttributes = {
-    codeSha256: BufferLike;
-    type: "login" | "verification";
-    email: string;
-    userGeneratedToken: string | null;
-    createdMs: number;
-    expiresMs: number;
-    consumedMs: number | null;
-    invalidatedMs: number | null;
   };
 
   export type SessionAttributes = {
@@ -357,70 +345,6 @@ export namespace Auth {
         OrgMembership,
         Resource<ClientRoles, UserRoles>
       >;
-    };
-  }
-
-  /**
-   *
-   *
-   * Database namespace
-   *
-   *
-   */
-  export namespace Db {
-    // Apis are identified by their domain and version, so no formal "id" property here
-    export type Api = ApiAttributes & { active: 0 | 1; allowUnidentifiedReqs: 0 | 1 };
-    export type Organization = { id: string } & OrganizationAttributes;
-    export type Client = Omit<ClientAttributes<string>, "roles"> & {
-      id: string;
-      organizationId: string;
-      secretBcrypt: string;
-      deletedMs: null | number;
-    };
-    export type ClientRole<Roles extends string> = {
-      clientId: string;
-      roleId: Roles;
-    };
-    export type ClientAccessRestriction = {
-      id: string;
-      type: ClientAccessRestrictionTypes;
-      clientId: string;
-    } & ClientAccessRestrictionAttributes;
-    export type User = Omit<UserAttributes<string>, "roles"> & {
-      id: string;
-      passwordBcrypt: string | null;
-      "2fa": 0 | 1;
-    };
-    export type UserRole<Roles extends string> = {
-      userId: string;
-      roleId: Roles;
-    };
-    export type Email = { id: string; userId: string } & EmailAttributes;
-    export type VerificationCode = VerificationCodeAttributes;
-    export type Session = { id: string; userId: string } & SessionAttributes;
-    export type SessionToken = {
-      type: "session" | "refresh";
-      tokenSha256: BufferLike;
-      sessionId: string;
-      createdMs: number;
-      expiresMs: number;
-      consumedMs: number | null;
-      invalidatedMs: number | null;
-    };
-
-    export type UserClient = {
-      userId: string;
-      clientId: string;
-      createdMs: number;
-    };
-    export type OrgMembership = {
-      id: string;
-      userId: string;
-      organizationId: string;
-      read: 1 | 0;
-      edit: 1 | 0;
-      manage: 1 | 0;
-      delete: 1 | 0;
     };
   }
 }

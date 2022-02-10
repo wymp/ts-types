@@ -1,6 +1,6 @@
 {
   "name": "@wymp/types",
-  "version": "0.2.0-rc5",
+  "version": "0.2.0-rc6",
   "description": "Types relevant to packages in the Wymp ecosystem. Note that this is NOT the same as @wymp/ts-simple-interfaces. See README for explanation.",
   "author": "Kael Shipman<kael.shipman@gmail.com>",
   "homepage": "https://github.com/wymp/ts-types",
