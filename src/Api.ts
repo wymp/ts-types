@@ -208,16 +208,23 @@ export namespace Api {
   export namespace Client {
     /**
      * Defines the set of parameters that may be passed into the API via the query string to specify
-     * page details and sorting of the result set. E.g.,
-     * `GET /users?pg[size]=25&pg[cursor]=bnVtOjY%3D&sort=-createdDate%2C%2Bname&include=bestFriend.name`
+     * page details, sorting and filtering of the result set. E.g.,
+     * `GET /users?pg[size]=25&pg[cursor]=bnVtOjY%3D&sort=-createdDate%2C%2Bname&include=bestFriend.name&filter=%7B%22date%22%3A%7B%22start%22%3A123456789%2C%22end%22%3A123456790%7D%7D`
+     *
+     * Note that actual values for `sort`, `include`, and `filter` are dependent on the system in
+     * which they are received. The _intention_ for Wymp services is that `sort` be a comma-separated
+     * list of fields with a `-` prefix indicating "descending sort"; `inlude` be a comma-separated
+     * list of dot-addressed fields corresponding to the objects being retrieved; and `filter` be a
+     * generic value that you can specify from the outside and which is serialized and sent as JSON.
      */
-    export type CollectionParams = {
+    export type CollectionParams<Filter = unknown> = {
       pg?: {
         size?: number;
         cursor?: string;
       };
       sort?: string;
       include?: string;
+      filter?: Filter;
     };
   }
 }
