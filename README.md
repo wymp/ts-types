@@ -10,5 +10,5 @@ the additional dependencies and bloat of the other Wymp packages, which they sur
 That library attempts to present simplified interfaces over common items in the broader Typescript
 world, whereas this one is focused exclusively on Wymp internals.
 
-To view docs for this library, clone the library and then run `pnpm i && pnpm docs:gen && pnpm docs:view`.
+Full docs for this library available at https://wymp.github.io/ts-types.
 
